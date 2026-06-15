@@ -1,0 +1,10 @@
+[package]
+name = "rev-tui"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+rev-core = { path = "../core" }
+rev-replay = { path = "../replay" }
+ratatui = { workspace = true }
+crossterm = { workspace = true }

@@ -1,0 +1,16 @@
+[package]
+name = "rev-cli"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+rev-core = { path = "../core" }
+rev-interceptor = { path = "../interceptor" }
+rev-recorder = { path = "../recorder" }
+rev-delta = { path = "../delta" }
+rev-replay = { path = "../replay" }
+rev-tui = { path = "../tui" }
+clap = { workspace = true }
+ratatui = { workspace = true }
+crossterm = { workspace = true }
+rusqlite = { workspace = true }

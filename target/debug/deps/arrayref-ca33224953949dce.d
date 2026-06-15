@@ -1,0 +1,7 @@
+D:\Projects\rev\target\debug\deps\arrayref-ca33224953949dce.d: C:\Users\Ali\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\arrayref-0.3.9\src\lib.rs
+
+D:\Projects\rev\target\debug\deps\libarrayref-ca33224953949dce.rlib: C:\Users\Ali\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\arrayref-0.3.9\src\lib.rs
+
+D:\Projects\rev\target\debug\deps\libarrayref-ca33224953949dce.rmeta: C:\Users\Ali\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\arrayref-0.3.9\src\lib.rs
+
+C:\Users\Ali\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\arrayref-0.3.9\src\lib.rs:

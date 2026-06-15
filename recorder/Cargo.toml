@@ -1,0 +1,9 @@
+[package]
+name = "rev-recorder"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+rev-core = { path = "../core" }
+bincode = { workspace = true }
+lz4_flex = { workspace = true }
