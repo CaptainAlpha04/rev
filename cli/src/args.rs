@@ -8,8 +8,16 @@ use std::path::PathBuf;
     about = "rev — Time-Traveler Runtime. Prefix any command with `rev` and get instant, zero-setup time-travel debugging."
 )]
 pub struct CliArgs {
+    /// Initialize rev in the current project (shims local venv python and package.json scripts)
+    #[arg(long)]
+    pub init: bool,
+
+    /// Uninitialize rev from the current project (restores shims and package.json scripts)
+    #[arg(long)]
+    pub uninit: bool,
+
     /// The interpreter and program to run (e.g., "python main.py")
-    #[arg(required_unless_present_any = ["replay", "export"])]
+    #[arg(required_unless_present_any = ["replay", "export", "init", "uninit"])]
     pub runtime: Option<String>,
 
     /// Arguments passed through to the program

@@ -22,16 +22,16 @@ use std::io::{Read, Seek, SeekFrom, Write};
 #[cfg(target_os = "linux")]
 impl PageTracker {
     pub fn new(pid: u32) -> Result<Self, RevError> {
-        let whitelist = parse_maps(pid)?;
+        let whitelist = parse_maps(pid).unwrap_or_default();
         let mut tracker = Self {
             _pid: pid,
             whitelist,
             page_cache: HashMap::new(),
         };
         // Reset soft-dirty bits
-        tracker.clear_soft_dirty()?;
+        let _ = tracker.clear_soft_dirty();
         // Populate initial contents cache
-        tracker.populate_initial_cache()?;
+        let _ = tracker.populate_initial_cache();
         Ok(tracker)
     }
 
@@ -183,7 +183,7 @@ impl PageTracker {
             OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, 0, self._pid)
         };
         if h_process.is_null() {
-            return Err(RevError::Io(std::io::Error::last_os_error()));
+            return Ok(());
         }
 
         let mut addr = std::ptr::null();
@@ -225,7 +225,7 @@ impl PageTracker {
             OpenProcess(PROCESS_VM_READ, 0, self._pid)
         };
         if h_process.is_null() {
-            return Err(RevError::Io(std::io::Error::last_os_error()));
+            return Ok(());
         }
 
         for region in &self.whitelist {

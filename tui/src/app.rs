@@ -102,15 +102,23 @@ impl TuiApp {
         let total_steps = replay.step_count();
         let worker = ReplayWorker::spawn(replay);
 
+        let mut mode = AppMode::Normal;
+        let mut error_message = None;
+
+        if total_steps == 0 {
+            error_message = Some("No events found in trace file. Replay cannot proceed.".to_string());
+            mode = AppMode::Error;
+        }
+
         TuiApp {
             worker,
             trace_path,
             current_step: 0,
             total_steps,
             current_state: None,
-            mode: AppMode::Normal,
+            mode,
             pending_seek: None,
-            error_message: None,
+            error_message,
             status_message: None,
             should_quit: false,
         }
@@ -506,9 +514,17 @@ impl TuiApp {
                 .borders(Borders::ALL)
                 .title(" Error ")
                 .style(Style::default().fg(Color::Red));
+            
+            let is_unsupported = err_msg.contains("Unsupported") || err_msg.contains("supported on Linux");
+            let title = if is_unsupported {
+                "  Replay Unsupported on this Platform"
+            } else {
+                "  Error Replaying Trace"
+            };
+
             let error_text = vec![
                 Line::from(""),
-                Line::from(Span::styled("  Replay Unsupported on this Platform", Style::default().add_modifier(Modifier::BOLD).fg(Color::Red))),
+                Line::from(Span::styled(title, Style::default().add_modifier(Modifier::BOLD).fg(Color::Red))),
                 Line::from(""),
                 Line::from(Span::styled(format!("  {}", err_msg), Style::default().fg(Color::White))),
                 Line::from(""),
