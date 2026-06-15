@@ -26,3 +26,7 @@ target/
 # OS generated files
 .DS_Store
 Thumbs.db
+
+# Test/Scratch files
+test_input.txt
+time_test.py
