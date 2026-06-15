@@ -63,26 +63,35 @@ impl DeltaEngine {
             reason: "No base snapshot found".to_string(),
         })?;
 
-        // 1. Load base snapshot S
+        // Load all nodes in range s..=step_id in a single database query!
+        let nodes = self.merkle.get_nodes_in_range(s, step_id)?;
+
         let mut page_map = std::collections::HashMap::new();
-        if let Some((_, _, s_pages)) = self.merkle.get_node_by_step(s)? {
-            for diff in s_pages {
-                page_map.insert(diff.address, diff.after);
+
+        // Find the base snapshot in the query results
+        let mut base_found = false;
+        for (step, pages) in &nodes {
+            if *step == s {
+                for diff in pages {
+                    page_map.insert(diff.address, diff.after.clone());
+                }
+                base_found = true;
+                break;
             }
-        } else {
+        }
+
+        if !base_found {
             return Err(RevError::ReplayFailed {
                 step: step_id,
                 reason: format!("Base snapshot step {} not found in database", s),
             });
         }
 
-        // 2. Apply forward deltas from S+1 up to step_id
-        for &step in &self.steps {
+        // Apply intermediate forward deltas in order
+        for (step, pages) in nodes {
             if step > s && step <= step_id {
-                if let Some((_, _, pages)) = self.merkle.get_node_by_step(step)? {
-                    for diff in pages {
-                        page_map.insert(diff.address, diff.after);
-                    }
+                for diff in pages {
+                    page_map.insert(diff.address, diff.after);
                 }
             }
         }

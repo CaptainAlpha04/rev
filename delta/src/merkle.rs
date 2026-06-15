@@ -89,6 +89,31 @@ impl MerkleDAG {
             Ok(None)
         }
     }
+
+    /// Retrieve delta details for a range of steps (inclusive)
+    pub fn get_nodes_in_range(
+        &self,
+        start_step: u64,
+        end_step: u64,
+    ) -> Result<Vec<(u64, Vec<PageDiff>)>, RevError> {
+        let mut stmt = self
+            .conn
+            .prepare("SELECT step_id, pages FROM deltas WHERE step_id >= ?1 AND step_id <= ?2 ORDER BY step_id ASC")?;
+
+        let mut rows = stmt.query(rusqlite::params![start_step, end_step])?;
+        let mut results = Vec::new();
+
+        while let Some(row) = rows.next()? {
+            let step_id: u64 = row.get(0)?;
+            let pages_vec: Vec<u8> = row.get(1)?;
+            let pages: Vec<PageDiff> = bincode::deserialize(&pages_vec).map_err(|e| {
+                RevError::Io(std::io::Error::new(std::io::ErrorKind::InvalidData, e))
+            })?;
+            results.push((step_id, pages));
+        }
+
+        Ok(results)
+    }
 }
 
 fn get_db_path(pid: u32) -> PathBuf {
@@ -103,4 +128,46 @@ fn get_db_path(pid: u32) -> PathBuf {
     path.push("deltas");
     path.push(format!("{}.db", pid));
     path
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_merkle_dag_range_query() {
+        let pid = 99999;
+        let mut merkle = MerkleDAG::new(pid).unwrap();
+
+        let diffs1 = vec![
+            PageDiff {
+                address: 0x1000,
+                before: vec![0; 4],
+                after: vec![1; 4],
+            }
+        ];
+        let diffs2 = vec![
+            PageDiff {
+                address: 0x2000,
+                before: vec![0; 4],
+                after: vec![2; 4],
+            }
+        ];
+
+        let hash0 = [0u8; 32];
+        let hash1 = merkle.insert(hash0, 0, &diffs1).unwrap();
+        let _hash2 = merkle.insert(hash1, 1, &diffs2).unwrap();
+
+        let nodes = merkle.get_nodes_in_range(0, 1).unwrap();
+        assert_eq!(nodes.len(), 2);
+        assert_eq!(nodes[0].0, 0);
+        assert_eq!(nodes[0].1[0].address, 0x1000);
+        assert_eq!(nodes[1].0, 1);
+        assert_eq!(nodes[1].1[0].address, 0x2000);
+
+        // Cleanup DB file
+        let db_path = get_db_path(pid);
+        drop(merkle);
+        let _ = std::fs::remove_file(db_path);
+    }
 }

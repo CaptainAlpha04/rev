@@ -10,6 +10,8 @@ use std::path::Path;
 
 pub use headless::HeadlessProcess;
 pub use runtimes::python::PythonIntrospector;
+pub use runtimes::node::NodeIntrospector;
+pub use runtimes::ruby::RubyIntrospector;
 
 pub trait RuntimeIntrospector: Send {
     /// Name of the runtime this handles (e.g., "python3")
@@ -115,66 +117,3 @@ impl ReplayEngine {
     }
 }
 
-#[derive(Default)]
-pub struct NodeIntrospector;
-impl NodeIntrospector {
-    pub fn new() -> Self {
-        Self
-    }
-}
-impl RuntimeIntrospector for NodeIntrospector {
-    fn runtime_name(&self) -> &str {
-        "node"
-    }
-    fn spawn_headless(
-        &self,
-        _program: &Path,
-        _args: &[String],
-    ) -> Result<HeadlessProcess, RevError> {
-        Err(RevError::UnsupportedPlatform(
-            "Node.js Introspector is only supported on Linux".to_string(),
-        ))
-    }
-    fn extract_variables(&self, _proc: &HeadlessProcess) -> Result<Vec<Variable>, RevError> {
-        Err(RevError::UnsupportedPlatform(
-            "Node.js Introspector is only supported on Linux".to_string(),
-        ))
-    }
-    fn extract_call_stack(&self, _proc: &HeadlessProcess) -> Result<Vec<StackFrame>, RevError> {
-        Err(RevError::UnsupportedPlatform(
-            "Node.js Introspector is only supported on Linux".to_string(),
-        ))
-    }
-}
-
-#[derive(Default)]
-pub struct RubyIntrospector;
-impl RubyIntrospector {
-    pub fn new() -> Self {
-        Self
-    }
-}
-impl RuntimeIntrospector for RubyIntrospector {
-    fn runtime_name(&self) -> &str {
-        "ruby"
-    }
-    fn spawn_headless(
-        &self,
-        _program: &Path,
-        _args: &[String],
-    ) -> Result<HeadlessProcess, RevError> {
-        Err(RevError::UnsupportedPlatform(
-            "Ruby Introspector is only supported on Linux".to_string(),
-        ))
-    }
-    fn extract_variables(&self, _proc: &HeadlessProcess) -> Result<Vec<Variable>, RevError> {
-        Err(RevError::UnsupportedPlatform(
-            "Ruby Introspector is only supported on Linux".to_string(),
-        ))
-    }
-    fn extract_call_stack(&self, _proc: &HeadlessProcess) -> Result<Vec<StackFrame>, RevError> {
-        Err(RevError::UnsupportedPlatform(
-            "Ruby Introspector is only supported on Linux".to_string(),
-        ))
-    }
-}
