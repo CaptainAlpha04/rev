@@ -91,6 +91,14 @@ impl Interceptor for LinuxInterceptor {
                 }
 
                 if libc::WIFEXITED(status) || libc::WIFSIGNALED(status) {
+                    let abnormally = if libc::WIFSIGNALED(status) {
+                        true
+                    } else {
+                        libc::WEXITSTATUS(status) != 0
+                    };
+                    if abnormally {
+                        crate::CHILD_EXITED_ABNORMALLY.store(true, std::sync::atomic::Ordering::SeqCst);
+                    }
                     return Err(RevError::ReplayFailed {
                         step: self.next_event_id,
                         reason: "Target process exited".to_string(),

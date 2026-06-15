@@ -4,6 +4,9 @@ pub mod syscall_map;
 
 use rev_core::error::RevError;
 use rev_core::types::SyscallEvent;
+use std::sync::atomic::AtomicBool;
+
+pub static CHILD_EXITED_ABNORMALLY: AtomicBool = AtomicBool::new(false);
 
 pub trait Interceptor: Send {
     /// Attach to a running process by PID

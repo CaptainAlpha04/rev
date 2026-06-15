@@ -47,9 +47,9 @@ pub fn run_orchestrator(args: CliArgs) -> Result<(), RevError> {
         PathBuf::from(&args.output)
     };
 
-    // If it's a replay command, handle replay immediately (Phase 2 / stub)
+    // If it's a replay command, handle replay immediately
     if let Some(trace_path) = args.replay {
-        println!("Replaying trace: {:?}", trace_path);
+        run_tui(&trace_path)?;
         return Ok(());
     }
 
@@ -190,6 +190,50 @@ pub fn run_orchestrator(args: CliArgs) -> Result<(), RevError> {
         println!("  Duration:           {}ms", stats.duration_ms);
     }
 
+    #[cfg(target_os = "linux")]
+    let crashed = rev_interceptor::CHILD_EXITED_ABNORMALLY.load(std::sync::atomic::Ordering::SeqCst);
+    #[cfg(not(target_os = "linux"))]
+    let crashed = false;
+
+    if crashed && !args.no_tui {
+        run_tui(&trace_path)?;
+    }
+
+    Ok(())
+}
+
+fn run_tui(trace_path: &std::path::Path) -> Result<(), RevError> {
+    // 1. Resolve introspector from trace header
+    let reader = rev_recorder::TraceReader::new(trace_path)?;
+    let introspector = get_introspector_by_name(&reader.header.runtime_name)?;
+
+    // 2. Initialize terminal guard (enabling raw mode, alternate screen)
+    struct TerminalGuard;
+    impl TerminalGuard {
+        fn new() -> Result<Self, std::io::Error> {
+            crossterm::terminal::enable_raw_mode()?;
+            crossterm::execute!(std::io::stdout(), crossterm::terminal::EnterAlternateScreen)?;
+            Ok(TerminalGuard)
+        }
+    }
+    impl Drop for TerminalGuard {
+        fn drop(&mut self) {
+            let _ = crossterm::execute!(std::io::stdout(), crossterm::terminal::LeaveAlternateScreen);
+            let _ = crossterm::terminal::disable_raw_mode();
+        }
+    }
+
+    let _guard = TerminalGuard::new().map_err(RevError::Io)?;
+
+    // 3. Construct terminal and run app
+    let mut stdout = std::io::stdout();
+    let backend = ratatui::backend::CrosstermBackend::new(&mut stdout);
+    let mut terminal = ratatui::Terminal::new(backend).map_err(RevError::Io)?;
+
+    let replay = rev_replay::ReplayEngine::new(trace_path, introspector)?;
+    let mut app = rev_tui::TuiApp::new(replay, trace_path.to_path_buf());
+
+    app.run(&mut terminal)?;
     Ok(())
 }
 

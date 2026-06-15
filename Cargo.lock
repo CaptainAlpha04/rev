@@ -647,7 +647,9 @@ dependencies = [
  "crossterm",
  "ratatui",
  "rev-core",
+ "rev-recorder",
  "rev-replay",
+ "serde_json",
 ]
 
 [[package]]

@@ -5,6 +5,8 @@ edition = "2021"
 
 [dependencies]
 rev-core = { path = "../core" }
+rev-recorder = { path = "../recorder" }
 rev-replay = { path = "../replay" }
 ratatui = { workspace = true }
 crossterm = { workspace = true }
+serde_json = { workspace = true }
