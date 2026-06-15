@@ -25,7 +25,11 @@ pub fn create_interceptor() -> Box<dyn Interceptor> {
     {
         Box::new(platform::linux::LinuxInterceptor::new())
     }
-    #[cfg(not(target_os = "linux"))]
+    #[cfg(target_os = "windows")]
+    {
+        Box::new(platform::windows::WindowsInterceptor::new())
+    }
+    #[cfg(not(any(target_os = "linux", target_os = "windows")))]
     {
         Box::new(platform::mock::MockInterceptor::new())
     }

@@ -3,7 +3,7 @@ use std::path::Path;
 
 pub struct HeadlessProcess {
     pub pid: u32,
-    #[cfg(target_os = "linux")]
+    #[cfg(any(target_os = "linux", target_os = "windows"))]
     pub child: std::process::Child,
 }
 
@@ -45,9 +45,24 @@ pub fn spawn_headless(program: &Path, args: &[String]) -> Result<HeadlessProcess
     Ok(HeadlessProcess { pid, child })
 }
 
-#[cfg(not(target_os = "linux"))]
+#[cfg(target_os = "windows")]
+pub fn spawn_headless(program: &Path, args: &[String]) -> Result<HeadlessProcess, RevError> {
+    use std::os::windows::process::CommandExt;
+    const CREATE_SUSPENDED: u32 = 0x00000004;
+
+    let mut cmd = std::process::Command::new(program);
+    cmd.args(args);
+    cmd.creation_flags(CREATE_SUSPENDED);
+
+    let child = cmd.spawn()?;
+    let pid = child.id();
+
+    Ok(HeadlessProcess { pid, child })
+}
+
+#[cfg(not(any(target_os = "linux", target_os = "windows")))]
 pub fn spawn_headless(_program: &Path, _args: &[String]) -> Result<HeadlessProcess, RevError> {
     Err(RevError::UnsupportedPlatform(
-        "Headless spawner is only supported on Linux".to_string(),
+        "Headless spawner is only supported on Linux and Windows".to_string(),
     ))
 }

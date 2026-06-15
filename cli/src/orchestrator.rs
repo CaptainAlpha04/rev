@@ -125,9 +125,19 @@ pub fn run_orchestrator(args: CliArgs) -> Result<(), RevError> {
         pid
     };
 
-    #[cfg(not(target_os = "linux"))]
+    #[cfg(target_os = "windows")]
     let child_pid = {
-        // On Windows/Mock, we spawn the process normally.
+        use std::os::windows::process::CommandExt;
+        const CREATE_SUSPENDED: u32 = 0x00000004;
+        let mut cmd = std::process::Command::new(program);
+        cmd.args(program_args);
+        cmd.creation_flags(CREATE_SUSPENDED);
+        let child = cmd.spawn()?;
+        child.id()
+    };
+
+    #[cfg(not(any(target_os = "linux", target_os = "windows")))]
+    let child_pid = {
         let mut cmd = std::process::Command::new(program);
         cmd.args(program_args);
         let child = cmd.spawn()?;
