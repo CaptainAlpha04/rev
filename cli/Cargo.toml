@@ -14,3 +14,4 @@ clap = { workspace = true }
 ratatui = { workspace = true }
 crossterm = { workspace = true }
 rusqlite = { workspace = true }
+serde_json = { workspace = true }

@@ -8,3 +8,4 @@ rev-core = { path = "../core" }
 rev-delta = { path = "../delta" }
 serde = { workspace = true }
 serde_json = { workspace = true }
+rev-recorder = { path = "../recorder" }

@@ -74,3 +74,54 @@ fn test_recorder_writes_valid_trace() {
     // Clean up
     let _ = std::fs::remove_file(&trace_path);
 }
+
+#[test]
+fn test_trace_reader_roundtrip() {
+    let temp_dir = std::env::temp_dir();
+    let trace_path = temp_dir.join(format!(
+        "test_reader_roundtrip_{}.rev-trace",
+        std::process::id()
+    ));
+
+    if trace_path.exists() {
+        let _ = std::fs::remove_file(&trace_path);
+    }
+
+    let config = RecorderConfig {
+        trace_path: trace_path.clone(),
+        chunk_size: 3,
+        runtime_name: "python3".to_string(),
+        target_pid: 4567,
+        start_ts: 987654321,
+    };
+
+    let mut recorder = Recorder::new(&trace_path, &config).unwrap();
+
+    let mut written_events = Vec::new();
+    for i in 0..5 {
+        let event = SyscallEvent {
+            id: i,
+            timestamp_ns: 2000 + i * 200,
+            syscall: SyscallKind::RandomRead,
+            return_bytes: vec![i as u8, (i + 1) as u8],
+            fd: None,
+        };
+        recorder.record(event.clone()).unwrap();
+        written_events.push(event);
+    }
+
+    recorder.finalize().unwrap();
+
+    // Now read back with TraceReader
+    let mut reader = rev_recorder::TraceReader::new(&trace_path).unwrap();
+    assert_eq!(reader.header.version, rev_core::constants::SCHEMA_VERSION);
+    assert_eq!(reader.header.runtime_name, "python3");
+    assert_eq!(reader.header.pid, 4567);
+    assert_eq!(reader.header.start_ts, 987654321);
+
+    let read_events = reader.read_all_events().unwrap();
+    assert_eq!(read_events.len(), 5);
+    assert_eq!(read_events, written_events);
+
+    let _ = std::fs::remove_file(&trace_path);
+}

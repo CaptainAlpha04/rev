@@ -1,3 +1,5 @@
+#![cfg(target_os = "linux")]
+
 use rev_cli::args::CliArgs;
 use rev_cli::orchestrator::run_orchestrator;
 use std::fs;

@@ -24,4 +24,7 @@ pub enum RevError {
 
     #[error("Database error: {0}")]
     Database(#[from] rusqlite::Error),
+
+    #[error("Platform unsupported: {0}")]
+    UnsupportedPlatform(String),
 }

@@ -589,6 +589,7 @@ dependencies = [
  "rev-replay",
  "rev-tui",
  "rusqlite",
+ "serde_json",
 ]
 
 [[package]]
@@ -634,6 +635,7 @@ version = "0.1.0"
 dependencies = [
  "rev-core",
  "rev-delta",
+ "rev-recorder",
  "serde",
  "serde_json",
 ]

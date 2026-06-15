@@ -1,0 +1,28 @@
+# Rust compilation artifacts
+target/
+
+# Cargo files that shouldn't be tracked (if any, although Cargo.toml is tracked)
+**/*.rs.bk
+
+# SQLite databases generated during tracing
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+
+# rev trace recording files
+*.rev-trace
+
+# IDEs and Editors
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+*.swo
+
+# OS generated files
+.DS_Store
+Thumbs.db

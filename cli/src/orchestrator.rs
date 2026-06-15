@@ -53,9 +53,29 @@ pub fn run_orchestrator(args: CliArgs) -> Result<(), RevError> {
         return Ok(());
     }
 
-    // If export command, handle export immediately (Phase 2 / stub)
+    // If export command, handle export immediately
     if let Some(export_args) = args.export {
-        println!("Exporting trace: {:?}", export_args);
+        if export_args.len() < 2 {
+            return Err(RevError::Io(std::io::Error::new(
+                std::io::ErrorKind::InvalidInput,
+                "Usage: --export <TRACE> <STEP>",
+            )));
+        }
+        let trace_path = PathBuf::from(&export_args[0]);
+        let step_id: u64 = export_args[1]
+            .parse()
+            .map_err(|e| RevError::Io(std::io::Error::new(std::io::ErrorKind::InvalidInput, e)))?;
+
+        let reader = rev_recorder::TraceReader::new(&trace_path)?;
+        let introspector = get_introspector_by_name(&reader.header.runtime_name)?;
+
+        let mut replay = rev_replay::ReplayEngine::new(&trace_path, introspector)?;
+        let state = replay.state_at(step_id)?;
+
+        let json = serde_json::to_string_pretty(&state)
+            .map_err(|e| RevError::Io(std::io::Error::new(std::io::ErrorKind::InvalidData, e)))?;
+
+        println!("{}", json);
         return Ok(());
     }
 
@@ -171,4 +191,15 @@ pub fn run_orchestrator(args: CliArgs) -> Result<(), RevError> {
     }
 
     Ok(())
+}
+
+fn get_introspector_by_name(
+    name: &str,
+) -> Result<Box<dyn rev_replay::RuntimeIntrospector>, RevError> {
+    match name {
+        "python3" | "python" => Ok(Box::new(rev_replay::PythonIntrospector::new())),
+        "node" => Ok(Box::new(rev_replay::NodeIntrospector::new())),
+        "ruby" => Ok(Box::new(rev_replay::RubyIntrospector::new())),
+        other => Err(RevError::UnsupportedRuntime(other.to_string())),
+    }
 }
